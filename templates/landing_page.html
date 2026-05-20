@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="w-full mb-8">
+    <div class="tabs tabs-lifted tabs-lg font-mono mb-6">
+        <input type="radio" name="cluster_tabs" id="tab_workloads" class="tab font-bold text-xs tracking-wider" aria-label="📦 WORKLOADS" checked />
+        <div class="tab-content bg-base-100/40 border-base-200/80 rounded-b-2xl rounded-tr-2xl p-6 space-y-8 block w-full border-t border-x shadow-xl backdrop-blur-md">
+
+            <div class="w-full">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="w-1.5 h-3 bg-secondary rounded-full"></span>
+                    <h2 class="text-xs uppercase tracking-widest font-black text-secondary">Active Deployments</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+                    {% for d in deployments %}
+                    <div class="bg-base-950/80 p-4 rounded-xl border border-base-200/40 flex justify-between items-center shadow-md">
+                        <div>
+                            <div class="text-sm font-bold text-slate-100 font-mono tracking-tight">{{ d.name }}</div>
+                            <div class="text-[10px] font-mono opacity-40 mt-1 uppercase tracking-wider">Strategy: {{ d.strategy }}</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="badge badge-accent font-mono text-[11px] font-bold px-2.5 py-2.5 shadow-sm">Replicas: {{ d.replicas }}</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-span-full p-4 bg-base-950/40 border border-dashed border-base-200/30 rounded-xl text-xs opacity-40 italic">
+                        No active workspace deployments detected in this namespace context.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="w-full border-t border-base-200/20 pt-6">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="w-1.5 h-3 bg-primary rounded-full"></span>
+                    <h2 class="text-xs uppercase tracking-widest font-black text-primary">Operational Pod Instances</h2>
+                </div>
+                {% include 'partials/pod_grid.html' %}
+            </div>
+        </div>
+
+        <input type="radio" name="cluster_tabs" id="tab_networking" class="tab font-bold text-xs tracking-wider" aria-label="🌐 NETWORKING" />
+        <div class="tab-content bg-base-100/40 border-base-200/80 rounded-b-2xl rounded-tr-2xl p-6 block w-full border-t border-x shadow-xl backdrop-blur-md">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="w-1.5 h-3 bg-accent rounded-full"></span>
+                <h2 class="text-xs uppercase tracking-widest font-black text-accent">Service Discovery Mapping</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full font-mono">
+                {% for svc in services %}
+                <div class="bg-base-950/80 border border-base-200/40 p-4 rounded-xl flex flex-col justify-between gap-3 shadow-md">
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="truncate">
+                            <span class="text-xs font-black text-accent truncate block" title="{{ svc.name }}">{{ svc.name }}</span>
+                            <div class="text-[10px] text-slate-400 mt-1">Cluster IP: <span class="text-slate-200 font-bold">{{ svc.cluster_ip }}</span></div>
+                        </div>
+                        <span class="badge badge-sm badge-neutral font-mono text-[9px] tracking-wider uppercase font-bold px-2 py-2 shrink-0">{{ svc.type }}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 pt-2 border-t border-base-200/20">
+                        {% for port in svc.ports %}
+                        <span class="text-[9px] bg-base-800 text-slate-300 px-2 py-0.5 rounded border border-base-200/20">{{ port }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full p-8 bg-base-950/40 border border-dashed border-base-200/30 rounded-xl text-center text-xs opacity-40 italic">
+                    No active internal routing services available.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<dialog id="log_modal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box max-w-4xl bg-slate-950 border border-slate-800 p-6 rounded-2xl shadow-2xl">
+
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+            <h3 class="text-xs font-mono font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Container Live Shell Stream
+            </h3>
+            <span class="text-[10px] font-mono opacity-40 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">tty0</span>
+        </div>
+
+        <div class="bg-black border border-slate-900 rounded-xl p-4 min-h-[300px] max-h-[500px] overflow-y-auto font-mono">
+            <div class="text-[11px] text-slate-500 mb-2 font-mono select-none">amamoun01@kubelens:~# viewing container stream...</div>
+
+            <pre id="log-terminal-output" class="text-xs text-emerald-400 whitespace-pre-wrap leading-relaxed bg-transparent w-full m-0 block font-mono">
+                Select a container to stream logs...
+            </pre>
+        </div>
+
+        <div class="modal-action mt-4 pt-2 border-t border-slate-900/60">
+            <form method="dialog">
+                <button class="btn btn-sm bg-slate-900 hover:bg-slate-800 text-slate-400 border border-slate-800 font-mono text-xs rounded-lg px-4">
+                    Close Stream
+                </button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
+<script>
+function streamContainerLogs(url) {
+    const outputDiv = document.getElementById('log-terminal-output');
+
+    outputDiv.innerHTML = "Connecting to Kubernetes API and downloading log buffer...";
+    outputDiv.className = "text-xs text-slate-500 font-mono italic animate-pulse";
+
+    document.getElementById('log_modal').showModal();
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) throw new Error("Network response failed");
+            return response.text();
+        })
+        .then(htmlData => {
+            let cleanLogs = htmlData.replace(/<\/?[^>]+(>|$)/g, "");
+
+            cleanLogs = cleanLogs.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+
+            outputDiv.innerHTML = cleanLogs;
+            outputDiv.className = "text-xs text-emerald-400 whitespace-pre-wrap leading-relaxed font-mono";
+        })
+        .catch(err => {
+            outputDiv.innerHTML = "Error rendering stream context: " + err.message;
+            outputDiv.className = "text-xs text-rose-500 font-mono";
+        });
+}
+</script>
+{% endblock %}

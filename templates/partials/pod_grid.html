@@ -1,0 +1,65 @@
+<div id="pod-grid-inner" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+    {% for pod in pods %}
+    <div class="card bg-base-100/60 backdrop-blur-sm shadow-xl border border-base-200/80 hover:border-primary/40 transition-all duration-300 group">
+        <div class="card-body p-5 flex flex-col justify-between gap-4">
+
+            <div class="flex items-start justify-between gap-2 border-b border-base-200/20 pb-2">
+                <div class="truncate">
+                    <h3 class="font-black text-sm truncate text-base-content group-hover:text-primary transition-colors tracking-tight font-mono" title="{{ pod.name }}">
+                        {{ pod.name }}
+                    </h3>
+                    <div class="flex items-center gap-1.5 mt-1">
+                        <span class="w-1.5 h-1.5 rounded-full {% if pod.status == 'Running' %}bg-success animate-pulse{% elif pod.status == 'Pending' %}bg-warning{% else %}bg-error{% endif %}"></span>
+                        <span class="text-[9px] font-mono tracking-wider uppercase opacity-50 font-bold">{{ pod.status }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tabs tabs-boxed bg-base-200/50 p-1 rounded-xl border border-base-300/40 mt-1">
+                <input type="radio" name="pod_tabs_{{ forloop.counter }}" class="tab text-[10px] font-bold tracking-wide uppercase" aria-label="Overview" checked />
+                <div class="tab-content bg-transparent p-1 mt-3 w-full">
+                    <div class="bg-base-950/60 p-3 rounded-xl space-y-2.5 font-mono text-[11px] border border-base-200/30 w-full">
+                        <div class="flex justify-between items-center"><span class="opacity-40 text-[10px]">POD IP:</span><span class="font-bold text-slate-300">{{ pod.pod_ip|default:"0.0.0.0" }}</span></div>
+                        <div class="flex justify-between items-center gap-4"><span class="opacity-40 text-[10px]">NODE LOCATION:</span><span class="text-right truncate font-medium text-slate-300" title="{{ pod.node_name }}">{{ pod.node_name }}</span></div>
+                    </div>
+                </div>
+
+                <input type="radio" name="pod_tabs_{{ forloop.counter }}" class="tab text-[10px] font-bold tracking-wide uppercase" aria-label="Lifecycle" />
+                <div class="tab-content bg-transparent p-1 mt-3 w-full">
+                    <div class="bg-base-950/60 p-3 rounded-xl space-y-2.5 font-mono text-[11px] border border-base-200/30 w-full">
+                        <div class="flex justify-between items-center"><span class="opacity-40 text-[10px]">CREATED AT:</span><span class="text-right text-slate-300 font-bold">{{ pod.created }}</span></div>
+                        <div class="flex justify-between items-center"><span class="opacity-40 text-[10px]">CONTROLLER:</span><span class="text-right badge badge-ghost text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-wide">ReplicaSet</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-2 mt-2">
+                <div class="text-[9px] font-black uppercase opacity-40 tracking-widest font-mono">Active Runtimes</div>
+                {% for c in pod.containers %}
+                <div class="flex items-center justify-between text-xs bg-base-200/80 p-2 rounded-xl border border-base-300/60 hover:bg-base-200 transition-colors">
+                    <div class="flex items-center gap-2.5 truncate">
+                        <div class="w-1.5 h-1.5 rounded-full {% if c.ready %}bg-success shadow-sm shadow-success/50{% else %}bg-error{% endif %}"></div>
+                        <span class="font-mono text-xs font-semibold text-slate-200 truncate max-w-[130px]">{{ c.name }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="text-[9px] font-mono opacity-50 px-1.5 py-0.5 rounded bg-base-300 border border-base-200/20">Restarts: {{ c.restart_count }}</span>
+                        <button class="btn btn-xs btn-square btn-ghost text-accent hover:bg-accent/10 border border-accent/20 rounded-md"
+                                onclick="streamContainerLogs('{% url 'pod_logs' selected_namespace pod.name %}?container={{ c.name }}')">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" /></svg>
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-[11px] font-mono opacity-40 italic text-center py-2">No runtime containers initialized.</div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full card bg-base-100/40 p-12 border-2 border-dashed border-base-200/60 text-center rounded-2xl max-w-md mx-auto mt-4 font-mono">
+        <div class="text-2xl mb-2 opacity-40">📭</div>
+        <p class="text-xs opacity-60">No active operational topology matches context namespace <span class="text-primary font-bold">{{ selected_namespace }}</span>.</p>
+    </div>
+    {% endfor %}
+</div>
