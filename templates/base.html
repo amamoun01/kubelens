@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KubeLens Control Plane</title>
+
+    {% load static %}
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+        .console-bg {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-base-300 min-h-screen text-base-content font-sans antialiased console-bg flex flex-col justify-between">
+
+    <div>
+        <div class="navbar bg-base-100/80 backdrop-blur-md border-b border-base-200/60 sticky top-0 z-50 px-6 shadow-lg">
+            <div class="flex-1 gap-3">
+                <div class="p-2 bg-primary/10 rounded-xl text-primary border border-primary/20">
+                    <img src="{% static 'favicon.ico' %}" class="h-6 w-6 object-contain" alt="KubeLens Logo">                </div>
+                <div>
+                    <span class="text-lg font-black tracking-wider bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                        KUBELENS
+                    </span>
+                    <div class="text-[10px] font-mono opacity-50 tracking-widest uppercase -mt-1">Control Plane Engine</div>
+                </div>
+            </div>
+
+            <div class="flex-none gap-4">
+                <form method="GET" action="/" class="flex items-center gap-3 bg-base-200/60 px-3 py-1.5 rounded-xl border border-base-100">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] uppercase tracking-wider font-bold opacity-40">Namespace:</span>
+                        <select name="namespace" onchange="this.form.submit()" class="select select-ghost select-xs font-mono focus:bg-transparent focus:outline-none font-bold text-primary">
+                            {% for ns in namespaces %}
+                                <option value="{{ ns }}" {% if ns == selected_namespace %}selected{% endif %}>{{ ns }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <main class="container mx-auto p-6 max-w-7xl animate-fadeIn">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <footer class="w-full bg-base-100 border-t border-base-200 px-6 py-4 flex items-center justify-between shadow-inner">
+
+        <div class="flex items-center gap-3">
+            <img src="{% static 'favicon.ico' %}" class="h-5 w-5 object-contain" alt="KubeLens Engine Core Logo">
+
+            <span class="text-xs font-black tracking-wider opacity-80 font-mono">KUBELENS</span>
+            <span class="badge badge-xs badge-neutral font-mono opacity-50 py-2 px-1.5">v2026.2.0</span>
+            <span class="flex items-center gap-1.5 text-[11px] text-success font-medium ml-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span> Connected
+            </span>
+        </div>
+
+        <div class="text-[11px] font-mono tracking-wide flex items-center gap-1">
+            <span class="opacity-40">© 2026 Engineered by</span>
+            <a href="https://github.com/amamoun01" target="_blank" class="text-primary font-bold hover:underline transition-all">
+                @amamoun01
+            </a>
+        </div>
+
+    </footer>
+
+</body>
+</html>

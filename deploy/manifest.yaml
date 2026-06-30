@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubelens-sa
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubelens-reader-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "services", "namespaces"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubelens-rbac-binding
+subjects:
+- kind: ServiceAccount
+  name: kubelens-sa
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: kubelens-reader-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubelens
+  namespace: default
+  labels:
+    app: kubelens
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubelens
+  template:
+    metadata:
+      labels:
+        app: kubelens
+    spec:
+      serviceAccountName: kubelens-sa
+      containers:
+      - name: dashboard
+        image: ghcr.io/amamoun01/kubelens:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DJANGO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kubelens-secrets
+              key: django-secret-key
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubelens-service
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+  selector:
+    app: kubelens
