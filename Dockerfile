@@ -15,11 +15,12 @@ RUN apk add --no-cache \
     postgresql-dev
 
 COPY requirements.txt /app/
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app/
 
-RUN useradd -u 8888 appuser && chown -R appuser:appuser /app
+RUN adduser -D -u 8888 appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
